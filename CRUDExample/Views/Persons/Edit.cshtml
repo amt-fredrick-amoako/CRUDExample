@@ -1,0 +1,136 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model PersonAddRequest
+
+@{
+    ViewBag.Title = "Edit Person";
+}
+<a asp-controller="Persons" asp-action="Index" class="link-hover">Back to Persons List</a>
+<h2>Edit Person</h2>
+
+<div class="w-50">
+    <form asp-controller="Persons" asp-action="Create" method="post">
+        @*PersonName*@
+        <div class="form-field flex">
+            <div class="w-25">
+                <label for="PersonName" class="form-label pt">Person Name</label>
+            </div>
+            <div class="flex-1">
+                <input asp-for="PersonName" class="form-input"/>
+                <span asp-validation-for="PersonName" class="text-red"></span>
+            </div>
+        </div>
+
+        @*Email*@
+        <div class="form-field flex">
+            <div class="w-25">
+                <label asp-for="Email" class="form-label pt">Email</label>
+            </div>
+            <div class="flex-1">
+                <input asp-for="Email" class="form-input" />
+                <span asp-validation-for="Email" class="text-red"></span>
+
+            </div>
+        </div>
+
+        @*DateOfBirth*@
+        <div class="form-field flex">
+            <div class="w-25">
+                <label asp-for="DateOfBirth" class="form-label pt">Date of Birth</label>
+            </div>
+            <div class="flex-1">
+                <input asp-for="DateOfBirth" type="date" class="form-input" />
+                <span asp-validation-for="DateOfBirth" class="text-red"></span>
+
+            </div>
+        </div>
+        
+        @*Gender*@
+        <div class="form-field flex">
+            <div class="w-25">
+                <label for="Gender" class="form-label pt">Gender</label>
+            </div>
+            <div class="flex-1">
+                @{
+                    string[] genders = (string[])Enum.GetNames(typeof(GenderOptions));
+                }
+
+                @foreach (string gender in genders)
+                {
+                    <input asp-for="Gender" value="@gender" type="radio" class="ml" />
+                    <label asp-for="Gender">@gender</label>
+                }
+                <span asp-validation-for="Gender" class="text-red"></span>
+
+                
+                @*<input id="Female" name="Gender" type="radio" value="Female" class="ml" />
+                <label for="Female">Female</label>
+                <input id="Other" name="Gender" type="radio" value="Other" class="ml"/>
+                <label for="Other">Other</label>*@
+            </div>
+        </div>
+
+        @*Country*@
+        <div class="form-field flex">
+            <div class="w-25">
+                <label asp-for="CountryID" class="form-label pt">Person Name</label>
+            </div>
+            <div class="flex-1">
+                <select asp-for="CountryID" asp-items="@ViewBag.CountryList" class="form-input">
+                    <option value="">Please Select</option>                   
+                </select>
+                <span asp-validation-for="CountryID" class="text-red"></span>
+
+            </div>
+        </div>
+
+        @*Address*@
+        <div class="form-field flex">
+            <div class="w-25">
+                <label asp-for="Address" class="form-label pt">Address</label>
+            </div>
+            <div class="flex-1">
+                <textarea asp-for="Address" value="" class="form-input"></textarea>
+                <span asp-validation-for="Address" class="text-red"></span>
+
+            </div>
+        </div>
+
+        @*ReceiveNewsLetters*@
+        <div class="form-field flex">
+            <div class="w-25">
+            </div>
+            <div class="flex-1">
+                <input asp-for="ReceiveNewsLetters" value="true" />
+                <label asp-for="ReceiveNewsLetters" class="form-label pt">ReceiveNewsLetters</label>
+                <span asp-validation-for="ReceiveNewsLetters" class="text-red"></span>
+
+            </div>
+        </div>
+
+        @*Button*@
+        <div class="form-field flex">
+            <div class="w-25">
+                
+            </div>
+            <div class="flex-1">
+                <button class="button button-blue-back">Update</button>
+
+                @if (ViewBag.Errors != null)
+                {
+                    <div class="text-red ml">
+                        <ul>
+                            @foreach (string error in ViewBag.Errors)
+                            {
+                                <li class="ml">@error</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+
+        
+    </form>
+</div>

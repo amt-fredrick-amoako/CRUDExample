@@ -1,0 +1,32 @@
+﻿@if (ViewBag.SortBy == ViewBag.ColumnName && ViewBag.SortOrder == SortOrderOptions.ASC.ToString())
+{
+    <th>
+        <a href="~/persons/index?
+searchBy=@(ViewBag.SearchBy)
+&searchString=@(ViewBag.SearchString)
+&sortBy=@(ViewBag.ColumnName)
+&sortOrder=@(nameof(SortOrderOptions.DESC))">@(ViewBag.DisplayName)</a>
+        <i class="fa-solid fa-sort-up"></i>
+    </th>
+}
+else if (ViewBag.SortBy == ViewBag.ColumnName && ViewBag.SortOrder == SortOrderOptions.DESC.ToString())
+{
+    <th>
+        <a href="~/persons/index?
+searchBy=@(ViewBag.SearchBy)
+&searchString=@(ViewBag.SearchString)
+&sortBy=@(ViewBag.ColumnName)
+&sortOrder=@(nameof(SortOrderOptions.ASC))">@(ViewBag.DisplayName)</a>
+        <i class="fa-solid fa-sort-down"></i>
+    </th>
+}
+else
+{
+    <th>
+        <a href="~/persons/index?
+searchBy=@(ViewBag.SearchBy)
+&searchString=@(ViewBag.SearchString)
+&sortBy=@(ViewBag.ColumnName)
+&sortOrder=@(nameof(SortOrderOptions.ASC))">@(ViewBag.DisplayName)</a>
+    </th>
+}
