@@ -1,11 +1,16 @@
-﻿namespace Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Entities
 {
     /// <summary>
     /// Domain model for storing Country details
     /// </summary>
     public class Country
     {
-        public Guid CountryId { get; set; }
+        [Key]
+        public Guid CountryID { get; set; }
+
+
         public string? CountryName { get; set; }
     }
 }

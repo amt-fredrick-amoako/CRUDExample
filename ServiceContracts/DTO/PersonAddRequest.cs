@@ -16,7 +16,9 @@ namespace ServiceContracts.DTO
 
         [DataType(DataType.Date)]
         public DateTime? DateOfBirth { get; set; }
+        [Required(ErrorMessage = "You must select your gender")]
         public GenderOptions? Gender { get; set; }
+        [Required(ErrorMessage = "Country can't be blank")]
         public Guid? CountryID { get; set; }
         public string? Address { get; set; }
         public bool ReceiveNewsLetters { get; set; }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ServiceContracts;
 using ServiceContracts.DTO;
@@ -78,6 +79,52 @@ namespace CRUDExample.Controllers
             PersonResponse personResponse = _personService.AddPerson(personAddRequest);
 
             return RedirectToAction("Index", "Persons");
+        }
+
+        [HttpGet]
+        [Route("[action]/{personID}")]
+        public IActionResult Edit(Guid personID)
+        {
+            PersonResponse personResponse = _personService.GetPersonByPersonId(personID);
+            if (personResponse == null)
+            {
+                return RedirectToAction("Index");
+            }
+
+            List<CountryResponse> countries = _countryService.GetCountryList();
+            ViewBag.CountryList = countries.Select(country => new SelectListItem
+            {
+                Text = country.CountryName,
+                Value = country.CountryId.ToString()
+            });
+
+            PersonUpdateRequest personUpdateRequest = personResponse.ToPersonUpdateRequest();
+            return View(personUpdateRequest);
+        }
+
+        [HttpPost]
+        [Route("[action]/{personID}")]
+        public IActionResult Edit(PersonUpdateRequest personUpdateRequest)
+        {
+            PersonResponse person = _personService.GetPersonByPersonId(personUpdateRequest.PersonID);
+            if (person == null)
+            {
+                return RedirectToAction("Index");
+            }
+
+            if (ModelState.IsValid)
+            {
+                PersonResponse updatedPerson = _personService.UpdatePerson(personUpdateRequest);
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                List<CountryResponse> coutries = _countryService.GetCountryList();
+                ViewBag.CountryList = coutries;
+                ViewBag.Errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList();
+            }
+
+            return View();
         }
     }
 }

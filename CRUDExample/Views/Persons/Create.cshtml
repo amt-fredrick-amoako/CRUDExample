@@ -17,7 +17,8 @@
                 <label for="PersonName" class="form-label pt">Person Name</label>
             </div>
             <div class="flex-1">
-                <input asp-for="PersonName" class="form-input"/>
+                <input asp-for="PersonName" class="form-input" />
+                <span asp-validation-for="PersonName"></span>
             </div>
         </div>
 
@@ -28,6 +29,7 @@
             </div>
             <div class="flex-1">
                 <input asp-for="Email" class="form-input" />
+                <span asp-validation-for="Email"></span>
             </div>
         </div>
 
@@ -40,7 +42,7 @@
                 <input asp-for="DateOfBirth" type="date" class="form-input" />
             </div>
         </div>
-        
+
         @*Gender*@
         <div class="form-field flex">
             <div class="w-25">
@@ -56,7 +58,9 @@
                     <input asp-for="Gender" value="@gender" type="radio" class="ml" />
                     <label asp-for="Gender">@gender</label>
                 }
-                
+                <span style="display: block" asp-validation-for="Gender"></span>
+
+
                 @*<input id="Female" name="Gender" type="radio" value="Female" class="ml" />
                 <label for="Female">Female</label>
                 <input id="Other" name="Gender" type="radio" value="Other" class="ml"/>
@@ -71,7 +75,7 @@
             </div>
             <div class="flex-1">
                 <select asp-for="CountryID" asp-items="@ViewBag.CountryList" class="form-input">
-                    <option value="">Please Select</option>                   
+                    <option value="">Please Select</option>
                 </select>
             </div>
         </div>
@@ -99,10 +103,10 @@
         @*Button*@
         <div class="form-field flex">
             <div class="w-25">
-                
             </div>
             <div class="flex-1">
                 <button class="button button-blue-back">Create</button>
+                <div asp-validation-summary="All" class="text-red"></div>
                 @if (ViewBag.Errors != null)
                 {
                     <div class="text-red ml">
@@ -117,10 +121,11 @@
             </div>
         </div>
 
-        
+
     </form>
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js" integrity="sha512-rstIgDs0xPgmG6RX1Aba4KV5cWJbAMcvRCVmglpam9SoHZiUCyQVDdH2LPlxoHtrv17XWblE/V/PP+Tr04hbtA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+@section scripts{
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" asp-fallback-test="window.jQuery" asp-fallback-src="~/jquery.min.js" integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js" asp-fallback-test="window.jQuery.validator" asp-fallback-src="~/jquery.validate.min.js" integrity="sha512-rstIgDs0xPgmG6RX1Aba4KV5cWJbAMcvRCVmglpam9SoHZiUCyQVDdH2LPlxoHtrv17XWblE/V/PP+Tr04hbtA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" asp-fallback-test="window.jQuery.validator.unobtrusive" asp-fallback-src="jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+}
