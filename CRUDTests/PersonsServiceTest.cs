@@ -7,6 +7,7 @@ using Xunit.Abstractions;
 using System.Linq;
 using Microsoft.VisualStudio.TestPlatform.Common.DataCollection;
 using Xunit;
+using Microsoft.EntityFrameworkCore;
 
 namespace CRUDTests
 {
@@ -19,8 +20,8 @@ namespace CRUDTests
 
         public PersonsServiceTest(ITestOutputHelper testOutputHelper)
         {
-            _personService = new PersonsService(false);
-            countryService = new CountryService(false);
+            countryService = new CountryService(new PeopleDbContext(new DbContextOptionsBuilder<PeopleDbContext>().Options));
+            _personService = new PersonsService(new PeopleDbContext(new DbContextOptionsBuilder<PeopleDbContext>().Options), countryService);
             this.testOutputHelper = testOutputHelper;
         }
 
