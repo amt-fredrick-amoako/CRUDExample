@@ -12,5 +12,7 @@ namespace Entities
 
 
         public string? CountryName { get; set; }
+        //Navigation Property
+        public virtual ICollection<Person>? Persons { get; set; }
     }
 }

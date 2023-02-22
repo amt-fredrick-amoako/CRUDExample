@@ -10,7 +10,7 @@
 <h2>Edit Person</h2>
 
 <div class="center-box">
-    <form asp-controller="Persons" asp-action="Edit" method="post">
+    <form asp-controller="Persons" asp-action="Delete" method="post">
 
         <input type="hidden" asp-for="PersonID" />
 
@@ -43,7 +43,7 @@
             <div class="w-25">
             </div>
             <div class="flex-1">
-                <button class="button button-blue-back">Update</button>
+                <button class="button button-red-back">Delete</button>
                 <div asp-validation-summary="All" class="text-red"></div>
                 @if (ViewBag.Errors != null)
                 {

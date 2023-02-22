@@ -10,7 +10,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<ICountryService, CountryService>();
 builder.Services.AddScoped<IPersonsService, PersonsService>();
 //Add PersonsDbContext to the IoC
-builder.Services.AddDbContextPool<PeopleDbContext>(options =>
+builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
@@ -23,6 +23,7 @@ if (builder.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
+Rotativa.AspNetCore.RotativaConfiguration.Setup("wwwroot", wkhtmltopdfRelativePath: "Rotativa");//add file to middleware chain
 app.UseStaticFiles();
 app.UseRouting();
 app.MapControllers();

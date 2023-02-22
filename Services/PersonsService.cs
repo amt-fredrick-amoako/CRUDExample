@@ -1,8 +1,14 @@
-﻿using Entities;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using Entities;
+using Microsoft.EntityFrameworkCore;
 using ServiceContracts;
 using ServiceContracts.DTO;
 using ServiceContracts.Enums;
 using Services.Helpers;
+using System.Globalization;
+using OfficeOpenXml;
+using System.Drawing;
 
 namespace Services
 {
@@ -107,27 +113,28 @@ namespace Services
         #endregion
 
         //fake a data store for person obj type
-        private readonly PeopleDbContext _db;
+        private readonly ApplicationDbContext _db;
         //fake injecting ICountriesService
         private readonly ICountryService countryService;
 
         //contructor initialization
-        public PersonsService(PeopleDbContext peopleDbContext, ICountryService countryService)
+        public PersonsService(ApplicationDbContext peopleDbContext, ICountryService countryService)
         {
             //Fake data storage
             _db = peopleDbContext;
             this.countryService = countryService;
         }
-
+        /*Redundant*/
         //reusable method to get country by id and convert to personResponseDTO
-        private PersonResponse ConvertPersonToPersonResponse(Person person)
-        {
-            PersonResponse personResponse = person.ToPersonResponse();
-            personResponse.CountryName = countryService.GetCountryByCountryId(person.CountryID)?.CountryName;
-            return personResponse;
-        }
+        //private PersonResponse ConvertPersonToPersonResponse(Person person)
+        //{
+        //    PersonResponse personResponse = person.ToPersonResponse();
+        //    personResponse.CountryName = person.Country?.CountryName; //access property directly
+        //    //personResponse.CountryName = countryService.GetCountryByCountryId(person.CountryID)?.CountryName;
+        //    return personResponse;
+        //}
 
-        public PersonResponse AddPerson(PersonAddRequest? person)
+        public async Task<PersonResponse> AddPerson(PersonAddRequest? person)
         {
             //validate personAddRequestDTO
             if (person == null) throw new ArgumentNullException(nameof(person));
@@ -139,24 +146,25 @@ namespace Services
             //convert and store the personAddRequestDTO to Person obj type and list respectively
             Person newPerson = person.ToPerson();
             newPerson.PersonID = Guid.NewGuid();
-            //_db.Persons.Add(newPerson);
-            //_db.SaveChanges();
+            _db.Persons.Add(newPerson);
+            await _db.SaveChangesAsync();
 
             //using store procedure instead of ef 
-            _db.sp_InsertPerson(newPerson);
+            //_db.sp_InsertPerson(newPerson);
 
-            return ConvertPersonToPersonResponse(newPerson);
+            return newPerson.ToPersonResponse();
         }
 
-        public List<PersonResponse> GetAllPersons()
+        public async Task<List<PersonResponse>> GetAllPersons()
         {
             //using stored procedures instead
             //SELECT * FROM Persons
-            return _db.sp_GetAllPersons().Select(person => ConvertPersonToPersonResponse(person)).ToList();
-            //return _db.Persons.ToList().Select(person => ConvertPersonToPersonResponse(person)).ToList();
+            //return _db.sp_GetAllPersons().Select(person => ConvertPersonToPersonResponse(person)).ToList();
+            var persons = await _db.Persons.Include("Country").ToListAsync();
+            return persons.Select(person => person.ToPersonResponse()).ToList();
         }
 
-        public PersonResponse? GetPersonByPersonId(Guid? id)
+        public async Task<PersonResponse?> GetPersonByPersonId(Guid? id)
         {
             /* Algorithm
              * 1. Check for null value in ID, throw error if null.
@@ -166,16 +174,16 @@ namespace Services
              */
 
             if (id == null) return null;
-            Person? person = _db.Persons.FirstOrDefault(person => person.PersonID == id);
+            Person? person = await _db.Persons.Include("Country").FirstOrDefaultAsync(person => person.PersonID == id);
             if (person == null) return null;
 
-            return ConvertPersonToPersonResponse(person) ?? null;
+            return person.ToPersonResponse() ?? null;
 
         }
 
-        public List<PersonResponse> GetFilteredPersons(string searchBy, string? searchString)
+        public async Task<List<PersonResponse>> GetFilteredPersons(string searchBy, string? searchString)
         {
-            List<PersonResponse> allPersons = GetAllPersons();
+            List<PersonResponse> allPersons = await GetAllPersons();
             List<PersonResponse> matchingPersons = allPersons;
 
             if (string.IsNullOrEmpty(searchBy) || string.IsNullOrEmpty(searchString))
@@ -210,7 +218,7 @@ namespace Services
             return matchingPersons;
         }
 
-        public List<PersonResponse> GetSortedPersons(List<PersonResponse> allPersons, string sortBy, SortOrderOptions sortedOrder)
+        public async Task<List<PersonResponse>> GetSortedPersons(List<PersonResponse> allPersons, string sortBy, SortOrderOptions sortedOrder)
         {
             if (string.IsNullOrEmpty(sortBy)) return allPersons;
 
@@ -257,13 +265,21 @@ namespace Services
             return sortedPersons;
         }
 
-        public PersonResponse UpdatePerson(PersonUpdateRequest? personUpdate)
+        public async Task<PersonResponse> UpdatePerson(PersonUpdateRequest? personUpdate)
         {
             if (personUpdate == null)
                 throw new ArgumentNullException(nameof(personUpdate));
 
             //validation
             ValidationHelper.ModelValidation(personUpdate);
+
+            //Convert to Person
+            Person updatePerson = personUpdate.ToPerson();
+            if (updatePerson == null)
+                throw new ArgumentException("Given person id doesn't exist");
+
+            //call the stored procedure method to update person object
+            //_db.sp_UpdatePerson(updatePerson);
 
             //get matching person obj to update
             Person? matchingPerson = _db.Persons.FirstOrDefault(person => person.PersonID == personUpdate.PersonID);
@@ -278,23 +294,147 @@ namespace Services
             matchingPerson.ReceiveNewsLetters = personUpdate.ReceiveNewsLetters;
             matchingPerson.Email = personUpdate.Email;
             matchingPerson.Gender = personUpdate.Gender.ToString();
+            await _db.SaveChangesAsync();
+            return matchingPerson.ToPersonResponse();
 
-            _db.SaveChanges();
-            return ConvertPersonToPersonResponse(matchingPerson);
+            //convert person object to person response and return it
+            //return updatePerson.ToPersonResponse();
         }
 
-        public bool DeletePerson(Guid? personId)
+        public async Task<bool> DeletePerson(Guid? personId)
         {
-            if(personId == null)
+            if (personId == null)
                 throw new ArgumentNullException(nameof(personId));
-            Person? person = _db.Persons.FirstOrDefault(person => person.PersonID == personId);
+            Person? person = await _db.Persons.FirstOrDefaultAsync(person => person.PersonID == personId);
             if (person == null)
                 return false;
-            _db.Persons.Remove(_db.Persons.First(person => person.PersonID == personId));
-            _db.SaveChanges();
+            _db.Persons.Remove(await _db.Persons.FirstAsync(person => person.PersonID == personId));
+            await _db.SaveChangesAsync();
+
+            //_db.sp_DeletePerson(person.PersonID);
             return true;
         }
 
-        
+        public async Task<MemoryStream> GetPersonsCSV()
+        {
+            MemoryStream memoryStream = new MemoryStream(); //initialize obj of memoryStreeam
+            StreamWriter streamWriter = new StreamWriter(memoryStream); //initialize object of streamWriter to write into memoryStream obj
+
+            CsvConfiguration csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture);
+
+
+            CsvWriter csvWriter = new CsvWriter(streamWriter, csvConfiguration); // initialize obj of csvWriter to write into the streamWriter
+
+            //Manually configure headers and data using the WriteField property as shown below
+            csvWriter.WriteField(nameof(PersonResponse.PersonName));
+            csvWriter.WriteField(nameof(PersonResponse.Email));
+            csvWriter.WriteField(nameof(PersonResponse.DateOfBirth));
+            csvWriter.WriteField(nameof(PersonResponse.Age));
+            csvWriter.WriteField(nameof(PersonResponse.Gender));
+            csvWriter.WriteField(nameof(PersonResponse.Address));
+            csvWriter.WriteField(nameof(PersonResponse.ReceiveNewsLetters));
+            csvWriter.NextRecord();
+
+            List<PersonResponse> persons = _db.Persons
+                .Include("Country")
+                .Select(person => person.ToPersonResponse()).ToList();
+            //Manually loop through values in the persons obj and generate the csv as demonstrated below
+            foreach (PersonResponse person in persons)
+            {
+                csvWriter.WriteField(person.PersonName);
+                csvWriter.WriteField(person.Email);
+                if (person.DateOfBirth.HasValue)
+                    csvWriter.WriteField(person.DateOfBirth.Value.ToString("yyyy-MM-dd"));
+                csvWriter.WriteField(person.Age);
+                csvWriter.WriteField(person.Gender);
+                csvWriter.WriteField(person.Address);
+                csvWriter.WriteField(person.ReceiveNewsLetters);
+                csvWriter.NextRecord();
+                csvWriter.Flush();
+            }
+
+            // few lines with auto generated csv
+            //CsvWriter csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture, leaveOpen: true); // initialize obj of csvWriter to write into the streamWriter
+
+            //csvWriter.WriteHeader<PersonResponse>(); //Write properties as headers
+            //csvWriter.NextRecord(); // moves to a new line
+
+            //await csvWriter.WriteRecordsAsync(persons); //1, abc, ....
+
+            memoryStream.Position = 0; //moves pointer to the beginning of the stream
+            return memoryStream;
+            /* Steps
+             * Create a memory stream object, this will act as a store for your stream
+             * Create a stream writer object, this will write into your memory stream
+             * Create an object of the CsvHelper with constructor filled with streamwrite obj, cultureinfo.invariantculture and leave open set to true
+             * Use property WriteHeader of the csvWrite obj to write property names of model class as headers
+             * Use NextRecord property to move to  a new line
+             * Load objects from database into a list of the obj type
+             * Use the WriteRecord method to write values or properties of each obj in the list seperated by commas
+             * Set memoryStream position to 0
+             * return memory stream
+             */
+        }
+
+        public async Task<MemoryStream> GetPersonsExcel()
+        {
+            MemoryStream memoryStream = new MemoryStream(); //Create an in memory stream
+            using ExcelPackage excelPackage = new ExcelPackage(memoryStream); //Use properties in excel package with obj of memoryStream
+            ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("PersonsSheet"); //Create a workbook, and add a worksheet and save it in worksheet return type
+
+            /*Create Headers for the first row in the worksheet*/
+            worksheet.Cells["A1"].Value = "Person Name";
+            worksheet.Cells["B1"].Value = "Email";
+            worksheet.Cells["C1"].Value = "Date of Birth";
+            worksheet.Cells["D1"].Value = "Age";
+            worksheet.Cells["E1"].Value = "Gender";
+            worksheet.Cells["F1"].Value = "Country";
+            worksheet.Cells["G1"].Value = "Address";
+            worksheet.Cells["H1"].Value = "Receive News Letters";
+
+            /*set style properties using the Excel Range to specify the range of rows that should be affected*/
+            using ExcelRange headerCells = worksheet.Cells["A1:H1"];
+            headerCells.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid; 
+            headerCells.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
+            headerCells.Style.Font.Bold = true;
+
+
+
+            int row = 2;
+            List<PersonResponse> persons = _db.Persons.Include("Country").Select(person => person.ToPersonResponse()).ToList();//get a list of persons
+
+            /*Iterate over the list and assign values to the cells*/
+            foreach (PersonResponse person in persons)
+            {
+                worksheet.Cells[row, 1].Value = person.PersonName;
+                worksheet.Cells[row, 2].Value = person.Email;
+                if (person.DateOfBirth.HasValue)
+                    worksheet.Cells[row, 3].Value = person.DateOfBirth.Value.ToString("yyyy-MM-dd");
+                worksheet.Cells[row, 4].Value = person.Age;
+                worksheet.Cells[row, 5].Value = person.Gender;
+                worksheet.Cells[row, 6].Value = person.CountryName;
+                worksheet.Cells[row, 7].Value = person.Address;
+                worksheet.Cells[row, 8].Value = person.ReceiveNewsLetters;
+
+                
+
+                row++;
+            }
+
+            //using ExcelRange nameCells = worksheet.Cells[$"A2:A{row}"];
+            //nameCells.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            //nameCells.Style.Fill.BackgroundColor.SetColor(Color.DarkGray);
+
+
+            worksheet.Cells[$"A1:H{row}"].AutoFitColumns(); //
+
+            await excelPackage.SaveAsync();
+
+            memoryStream.Position = 0;
+
+            return memoryStream;
+
+
+        }
     }
 }
