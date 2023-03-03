@@ -26,7 +26,7 @@ namespace CRUDTests
             var dbContext = dbContextMock.Object;
             dbContextMock.CreateDbSetMock(dbSet => dbSet.Countries, countriesInitialData);
 
-            _countriesService = new CountryService(dbContext);
+            _countriesService = new CountryService(null);
 
             fixture = new Fixture();
         }
