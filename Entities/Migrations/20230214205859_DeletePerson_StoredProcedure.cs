@@ -11,7 +11,7 @@ namespace Entities.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             string sp_DeletePerson = @"
-                CREATE PROCEDURE [dbo].[DeletePerson](@personId)
+                CREATE PROCEDURE [dbo].[DeletePerson](@personId uniqueidentifier)
                 AS BEGIN
                     SET NOCOUNT ON;
                     DELETE FROM [dbo].[Persons]

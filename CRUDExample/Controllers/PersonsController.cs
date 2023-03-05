@@ -1,23 +1,24 @@
-﻿using CRUDExample.Filters.ActionFilters;
+﻿using CRUDExample.Filters;
+using CRUDExample.Filters.ActionFilters;
 using CRUDExample.Filters.AuthorizationFilter;
 using CRUDExample.Filters.ExceptionFilters;
 using CRUDExample.Filters.ResourceFilter;
 using CRUDExample.Filters.ResultFilters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using OfficeOpenXml.Attributes;
 using Rotativa.AspNetCore;
 using Rotativa.AspNetCore.Options;
 using ServiceContracts;
 using ServiceContracts.DTO;
 using ServiceContracts.Enums;
-using Services;
 
 namespace CRUDExample.Controllers
 {
     [Route("[controller]")]
-    [TypeFilter(typeof(ResponseHeaderActionFilter), Arguments = new object[] { "My-Key-From-Controller", "My-Value-From-Controller", 3 }, Order = 3)] //Class level filter
+    //[TypeFilter(typeof(ResponseHeaderActionFilter), Arguments = new object[] { "My-Key-From-Controller", "My-Value-From-Controller", 3 }, Order = 3)] //Class level filter
+    [ResponseHeaderFilterFactory("My-Key-From-Controller", "My-Value-From-Controller", 3)]
     //[TypeFilter(typeof(HandleExceptionFilter))]
+    [TypeFilter(typeof(PersonsAlwaysRunResultFilter))]
     public class PersonsController : Controller
     {
         private readonly IPersonsService _personService;
@@ -34,9 +35,11 @@ namespace CRUDExample.Controllers
 
         [Route("[action]")]
         [Route("/")]
-        [TypeFilter(typeof(PersonsListActionFilter), Order = 4)] //attached action filter to the appropriate action method
-        [TypeFilter(typeof(ResponseHeaderActionFilter), Arguments = new object[] { "My-Key-From-Action", "My-Value-From-Action", 1 }, Order = 1)] //Set order property of the TypeFilter Attribute
+        [ServiceFilter(typeof(PersonsListActionFilter), Order = 4)] //attached action filter to the appropriate action method
+        //[TypeFilter(typeof(ResponseHeaderActionFilter), Arguments = new object[] { "My-Key-From-Action", "My-Value-From-Action", 1 }, Order = 1)] //Set order property of the TypeFilter Attribute
+        [ResponseHeaderFilterFactory("My-Key-From-Action", "My-Value-From-Action", 1)] //Attribute version which inherits from the ActionFilterAttribute
         [TypeFilter(typeof(PersonsListResultFilter))]
+        [SkipFilter]
         public async Task<IActionResult> Index(string searchBy,
             string searchString,
             string sortBy = nameof(PersonResponse.PersonName),
@@ -72,7 +75,8 @@ namespace CRUDExample.Controllers
 
         [Route("[action]")]
         [HttpGet]
-        [TypeFilter(typeof(ResponseHeaderActionFilter), Arguments = new object[] { "X-My-Key", "My-Value", 4 })]
+        //[TypeFilter(typeof(ResponseHeaderActionFilter), Arguments = new object[] { "X-My-Key", "My-Value", 4 })]
+        [ResponseHeaderFilterFactory("X-My-Key", "My-Value", 4)]
         public async Task<IActionResult> Create()
         {
             List<CountryResponse> countries = await _countryService.GetCountryList();
@@ -88,17 +92,19 @@ namespace CRUDExample.Controllers
         [Route("[action]")]
         [HttpPost]
         [TypeFilter(typeof(PersonCreateAndEditPostActionFilter))]
-        [TypeFilter(typeof(FeatureDisabledResourceFilter), Arguments = new object[] {false})]
+        [TypeFilter(typeof(FeatureDisabledResourceFilter), Arguments = new object[] { false })]
         public async Task<IActionResult> Create(PersonAddRequest personRequest)
         {
-            //if (!ModelState.IsValid)
-            //{
-            //    List<CountryResponse> coutries = await _countryService.GetCountryList();
-            //    ViewBag.CountryList = coutries.Select(country => new SelectListItem { Text = country.CountryName, Value = country.CountryId.ToString() });
-            //    ViewBag.Errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList();
+            /*
+            if (!ModelState.IsValid)
+            {
+                List<CountryResponse> coutries = await _countryService.GetCountryList();
+                ViewBag.CountryList = coutries.Select(country => new SelectListItem { Text = country.CountryName, Value = country.CountryId.ToString() });
+                ViewBag.Errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList();
 
-            //    return View(personRequest);
-            //}
+                return View(personRequest);
+            }
+            */
 
             PersonResponse personResponse = await _personService.AddPerson(personRequest);
 
@@ -131,7 +137,7 @@ namespace CRUDExample.Controllers
         [Route("[action]/{personID}")]
         [TypeFilter(typeof(PersonCreateAndEditPostActionFilter))]
         [TypeFilter(typeof(TokenAuthorizationFilter))]
-        [TypeFilter(typeof(PersonsAlwaysRunResultFilter))]
+        //[TypeFilter(typeof(PersonsAlwaysRunResultFilter))]
         public async Task<IActionResult> Edit(PersonUpdateRequest personRequest)
         {
             PersonResponse person = await _personService.GetPersonByPersonId(personRequest.PersonID);

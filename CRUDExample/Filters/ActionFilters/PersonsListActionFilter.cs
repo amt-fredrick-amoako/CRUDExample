@@ -1,6 +1,7 @@
 ﻿using CRUDExample.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using ServiceContracts.DTO;
+using ServiceContracts.Enums;
 
 namespace CRUDExample.Filters.ActionFilters
 {
@@ -17,7 +18,7 @@ namespace CRUDExample.Filters.ActionFilters
         public void OnActionExecuted(ActionExecutedContext context)
         {
             //To do: add before logic here
-            _logger.LogInformation("{FilterName}.{ActionName} executed", nameof(PersonsListActionFilter),nameof(OnActionExecuted));
+            _logger.LogInformation("{FilterName}.{ActionName} executed", nameof(PersonsListActionFilter), nameof(OnActionExecuted));
             //typecase the context's controller to personsController before you're able to reach the ViewData Object
             PersonsController personsController = (PersonsController)context.Controller;
 
@@ -32,10 +33,22 @@ namespace CRUDExample.Filters.ActionFilters
                     personsController.ViewData["SearchString"] = Convert.ToString(parameters["searchString"]);
 
                 if (parameters.ContainsKey("sortBy"))
+                {
                     personsController.ViewData["SortBy"] = Convert.ToString(parameters["sortBy"]);
+                }
+                else
+                {
+                    personsController.ViewData["SortBy"] = nameof(PersonResponse.PersonName);
+                }
 
                 if (parameters.ContainsKey("sortOrder"))
+                {
                     personsController.ViewData["SortOrder"] = Convert.ToString(parameters["sortOrder"]);
+                }
+                else
+                {
+                    personsController.ViewData["SortOrder"] = nameof(SortOrderOptions.ASC);
+                }
             }
 
             //shift search to action method to simplify code in the controller

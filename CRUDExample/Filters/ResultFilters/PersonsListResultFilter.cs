@@ -15,11 +15,13 @@ namespace CRUDExample.Filters.ResultFilters
         {
             //TO DO: before logic
             _logger.LogInformation("{FilterName}.{MethodName} - Before", nameof(PersonsListResultFilter), nameof(OnResultExecutionAsync));
+            _logger.LogInformation("{FilterName}.{MethodName} - After", nameof(PersonsListResultFilter), nameof(OnResultExecutionAsync));
+
+            context.HttpContext.Response.Headers["Last-Modified"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
             await next(); //call the subsequent filter [or] IActionResult
 
             //TO DO: after logic
-            _logger.LogInformation("{FilterName}.{MethodName} - After", nameof(PersonsListResultFilter), nameof(OnResultExecutionAsync));
-            context.HttpContext.Response.Headers["Last-Modified"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+           
 
         }
     }

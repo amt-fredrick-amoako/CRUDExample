@@ -6,16 +6,18 @@ using ServiceContracts;
 using Services;
 using Serilog;
 using CRUDExample.Filters.ActionFilters;
+using CRUDExample;
 
 var builder = WebApplication.CreateBuilder(args);
-
-//configure logging providers, choose what you want and what you don't want 
-//builder.Host.ConfigureLogging(logging => {
-//    logging.ClearProviders();
-//    logging.AddDebug();
-//    logging.AddConsole();
-//    logging.AddEventLog();
-//});
+/*
+configure logging providers, choose what you want and what you don't want 
+builder.Host.ConfigureLogging(logging => {
+    logging.ClearProviders();
+    logging.AddDebug();
+    logging.AddConsole();
+    logging.AddEventLog();
+});
+*/
 
 //Serilog
 builder.Host.UseSerilog((HostBuilderContext context, IServiceProvider services, LoggerConfiguration logger) =>
@@ -24,33 +26,8 @@ builder.Host.UseSerilog((HostBuilderContext context, IServiceProvider services, 
     .ReadFrom.Services(services);// read out current app's services and make them available to serilog
 });
 
-//Add controllers and views as services
-//Configure global filter
-builder.Services.AddControllersWithViews(options =>
-{
-    //options.Filters.Add<ResponseHeaderActionFilter>(); //Global filter added but parameters cannot be added like this
-    var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<ResponseHeaderActionFilter>>(); //Creates a service provider with services from provided service collection
+builder.Services.ConfigureServices(builder.Configuration);
 
-    options.Filters.Add(new ResponseHeaderActionFilter(logger, "My-Key-From-Global", "My-Value-From-Global", 2));
-});
-
-//Add PersonsService and CountriesService to the IoC
-builder.Services.AddScoped<ICountryService, CountryService>();
-builder.Services.AddScoped<IPersonsService, PersonsService>();
-builder.Services.AddScoped<IPersonsRepository, PersonsRepository>();
-builder.Services.AddScoped<ICountriesRepository, CountriesRepository>();
-//Add PersonsDbContext to the IoC
-builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
-
-//logging http request and response
-builder.Services.AddHttpLogging(options =>
-{
-    options.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.RequestProperties 
-    | Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.ResponsePropertiesAndHeaders;
-});
 
 var app = builder.Build();
 
@@ -73,6 +50,7 @@ app.UseHttpLogging();
 
 if (builder.Environment.IsEnvironment("Test") == false)
     Rotativa.AspNetCore.RotativaConfiguration.Setup("wwwroot", wkhtmltopdfRelativePath: "Rotativa");//add file to middleware chain
+
 app.UseStaticFiles();
 app.UseRouting();
 app.MapControllers();

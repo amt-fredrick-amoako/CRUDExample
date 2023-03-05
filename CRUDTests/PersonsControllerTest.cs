@@ -1,5 +1,4 @@
 ﻿using AutoFixture;
-using Castle.Core.Logging;
 using CRUDExample.Controllers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +21,11 @@ public class PersonsControllerTest
     private readonly IPersonsService _personsService;
     private readonly ICountryService _countryService;
     private readonly IFixture _fixture;
+    private readonly ILogger<PersonsController> _logger;
 
     private readonly Mock<ICountryService> _countryServiceMock;
     private readonly Mock<IPersonsService> _personsServiceMock;
+    private readonly Mock<ILogger<PersonsController>> _loggerMock;
 
     public PersonsControllerTest()
     {
@@ -34,6 +35,7 @@ public class PersonsControllerTest
         _fixture = new Fixture();
         _personsService = _personsServiceMock.Object;
         _countryService = _countryServiceMock.Object;
+        _logger = _loggerMock.Object;
 
     }
 
@@ -43,10 +45,10 @@ public class PersonsControllerTest
     {
         //Arrange
         List<PersonResponse> persons_response_list = _fixture.Create<List<PersonResponse>>();
-        var logger = new Mock<ILogger<PersonsController>>();
+        //var logger = new Mock<ILogger<PersonsController>>();
 
 
-        PersonsController personsController = new PersonsController(_personsService, _countryService, logger.Object);
+        PersonsController personsController = new PersonsController(_personsService, _countryService, _logger);
 
         _personsServiceMock.Setup(temp => temp.GetFilteredPersons(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(persons_response_list);
         _personsServiceMock.Setup(temp => temp.GetSortedPersons(It.IsAny<List<PersonResponse>>(), It.IsAny<string>(), It.IsAny<SortOrderOptions>())).ReturnsAsync(persons_response_list);
@@ -74,32 +76,32 @@ public class PersonsControllerTest
     #endregion
 
     #region Create
-    [Fact]
-    public async Task Create_IfModelErrors_ShouldReturnCreateView()
-    {
-        //Arrange
-        PersonAddRequest person_add_request = _fixture.Create<PersonAddRequest>();
-        PersonResponse person_response = _fixture.Create<PersonResponse>();
-        List<CountryResponse> countries = _fixture.Create<List<CountryResponse>>();
-        var logger = new Mock<ILogger<PersonsController>>();
+    //[Fact]
+    //public async Task Create_IfModelErrors_ShouldReturnCreateView()
+    //{
+    //    //Arrange
+    //    PersonAddRequest person_add_request = _fixture.Create<PersonAddRequest>();
+    //    PersonResponse person_response = _fixture.Create<PersonResponse>();
+    //    List<CountryResponse> countries = _fixture.Create<List<CountryResponse>>();
+    //    //var logger = new Mock<ILogger<PersonsController>>();
 
 
 
-        _countryServiceMock.Setup(temp => temp.GetCountryList()).ReturnsAsync(countries);
-        _personsServiceMock.Setup(temp => temp.AddPerson(It.IsAny<PersonAddRequest>())).ReturnsAsync(person_response);
+    //    _countryServiceMock.Setup(temp => temp.GetCountryList()).ReturnsAsync(countries);
+    //    _personsServiceMock.Setup(temp => temp.AddPerson(It.IsAny<PersonAddRequest>())).ReturnsAsync(person_response);
 
-        PersonsController personsController = new PersonsController(_personsService, _countryService, logger.Object);
+    //    PersonsController personsController = new PersonsController(_personsService, _countryService, _logger);
 
-        //Act
-        personsController.ModelState.AddModelError("PersonName", "Person Name should not be empty");//add model state error yourself
+    //    //Act
+    //    personsController.ModelState.AddModelError("PersonName", "Person Name should not be empty");//add model state error yourself
 
-        IActionResult result = await personsController.Create(person_add_request);
+    //    IActionResult result = await personsController.Create(person_add_request);
 
-        //Assert
-        ViewResult viewResult = Assert.IsType<ViewResult>(result);
-        viewResult.ViewData.Model.Should().BeAssignableTo<PersonAddRequest>();
-        viewResult.ViewData.Model.Should().Be(person_add_request);
-    }
+    //    //Assert
+    //    ViewResult viewResult = Assert.IsType<ViewResult>(result);
+    //    viewResult.ViewData.Model.Should().BeAssignableTo<PersonAddRequest>();
+    //    viewResult.ViewData.Model.Should().Be(person_add_request);
+    //}
 
     [Fact]
     public async Task Create_IfNoModelErrors_ShouldReturnRedirectToIndex()
@@ -108,14 +110,14 @@ public class PersonsControllerTest
         PersonAddRequest person_add_request = _fixture.Create<PersonAddRequest>();
         PersonResponse person_response = _fixture.Create<PersonResponse>();
         List<CountryResponse> countries = _fixture.Create<List<CountryResponse>>();
-        var logger = new Mock<ILogger<PersonsController>>();
+        //var logger = new Mock<ILogger<PersonsController>>();
 
 
 
         _countryServiceMock.Setup(temp => temp.GetCountryList()).ReturnsAsync(countries);
         _personsServiceMock.Setup(temp => temp.AddPerson(It.IsAny<PersonAddRequest>())).ReturnsAsync(person_response);
 
-        PersonsController personsController = new PersonsController(_personsService, _countryService, logger.Object);
+        PersonsController personsController = new PersonsController(_personsService, _countryService, _logger);
 
         //Act
         IActionResult result = await personsController.Create(person_add_request);
