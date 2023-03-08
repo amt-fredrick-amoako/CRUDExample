@@ -13,10 +13,11 @@ using RepositoryContracts;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using SerilogTimings;
+using Exceptions;
 
 namespace Services
 {
-    public class PersonsService : IPersonsService
+    public class PersonsGetService : IPersonsGetService
     {
         #region Comment on Initial approach
         ////fake a data store for person obj type
@@ -118,13 +119,13 @@ namespace Services
 
         //fake a data store for person obj type
         private readonly IPersonsRepository _personsRepository;
-        private readonly ILogger<PersonsService> _logger;
+        private readonly ILogger<PersonsGetService> _logger;
         private readonly IDiagnosticContext _diagnosticContext; //Diagnotic context private field
         //fake injecting ICountriesService
 
 
         //contructor initialization
-        public PersonsService(IPersonsRepository personsRepository, ILogger<PersonsService> logger, IDiagnosticContext diagnosticContext)
+        public PersonsGetService(IPersonsRepository personsRepository, ILogger<PersonsGetService> logger, IDiagnosticContext diagnosticContext)
         {
             _personsRepository = personsRepository;
             _logger = logger;
@@ -140,27 +141,7 @@ namespace Services
         //    return personResponse;
         //}
 
-        public async Task<PersonResponse> AddPerson(PersonAddRequest? person)
-        {
-            //validate personAddRequestDTO
-            if (person == null) throw new ArgumentNullException(nameof(person));
-            //if (string.IsNullOrEmpty(person.PersonName)) throw new ArgumentException("Person name is required");
-
-            //model validations
-            ValidationHelper.ModelValidation(person);
-
-            //convert and store the personAddRequestDTO to Person obj type and list respectively
-            Person newPerson = person.ToPerson();
-            newPerson.PersonID = Guid.NewGuid();
-            await _personsRepository.AddPerson(newPerson);
-
-            //using store procedure instead of ef 
-            //_db.sp_InsertPerson(newPerson);
-
-            return newPerson.ToPersonResponse();
-        }
-
-        public async Task<List<PersonResponse>> GetAllPersons()
+        public virtual async Task<List<PersonResponse>> GetAllPersons()
         {
             _logger.LogInformation("GetAllPersons of PersonsService");
             //using stored procedures instead
@@ -170,7 +151,7 @@ namespace Services
             return persons.Select(person => person.ToPersonResponse()).ToList();
         }
 
-        public async Task<PersonResponse?> GetPersonByPersonId(Guid? id)
+        public virtual async Task<PersonResponse?> GetPersonByPersonId(Guid? id)
         {
             /* Algorithm
              * 1. Check for null value in ID, throw error if null.
@@ -187,7 +168,7 @@ namespace Services
 
         }
 
-        public async Task<List<PersonResponse>> GetFilteredPersons(string searchBy, string? searchString)
+        public virtual async Task<List<PersonResponse>> GetFilteredPersons(string searchBy, string? searchString)
         {
             _logger.LogInformation("GetFilteredPersons of Persons Service");
             List<Person> persons;
@@ -228,7 +209,7 @@ namespace Services
             return (from person in persons select person.ToPersonResponse()).ToList();
         }
 
-        public async Task<List<PersonResponse>> GetSortedPersons(List<PersonResponse> allPersons, string sortBy, SortOrderOptions sortedOrder)
+        public virtual async Task<List<PersonResponse>> GetSortedPersons(List<PersonResponse> allPersons, string sortBy, SortOrderOptions sortedOrder)
         {
             _logger.LogInformation("GetSortedPersons method of Persons Service");
             if (string.IsNullOrEmpty(sortBy)) return allPersons;
@@ -276,7 +257,7 @@ namespace Services
             return sortedPersons;
         }
 
-        public async Task<PersonResponse> UpdatePerson(PersonUpdateRequest? personUpdate)
+        public virtual async Task<PersonResponse> UpdatePerson(PersonUpdateRequest? personUpdate)
         {
             if (personUpdate == null)
                 throw new ArgumentNullException(nameof(personUpdate));
@@ -295,7 +276,7 @@ namespace Services
             //get matching person obj to update
             Person? matchingPerson = await _personsRepository.GetPersonByPersonID(personUpdate.PersonID);
             if (matchingPerson == null)
-                throw new ArgumentException("Given person id doesn't exist");
+                throw new InvalidPersonIDException("Given person id doesn't exist");
 
             //update all details
             matchingPerson.PersonName = personUpdate.PersonName;
@@ -313,7 +294,7 @@ namespace Services
             //return updatePerson.ToPersonResponse();
         }
 
-        public async Task<bool> DeletePerson(Guid? personId)
+        public virtual async Task<bool> DeletePerson(Guid? personId)
         {
             if (personId == null)
                 throw new ArgumentNullException(nameof(personId));
@@ -326,7 +307,7 @@ namespace Services
             return await _personsRepository.DeletePersonByPersonID(personId.Value);
         }
 
-        public async Task<MemoryStream> GetPersonsCSV()
+        public virtual async Task<MemoryStream> GetPersonsCSV()
         {
             MemoryStream memoryStream = new MemoryStream(); //initialize obj of memoryStreeam
             StreamWriter streamWriter = new StreamWriter(memoryStream); //initialize object of streamWriter to write into memoryStream obj
@@ -385,7 +366,7 @@ namespace Services
              */
         }
 
-        public async Task<MemoryStream> GetPersonsExcel()
+        public virtual async Task<MemoryStream> GetPersonsExcel()
         {
             MemoryStream memoryStream = new MemoryStream(); //Create an in memory stream
             using ExcelPackage excelPackage = new ExcelPackage(memoryStream); //Use properties in excel package with obj of memoryStream

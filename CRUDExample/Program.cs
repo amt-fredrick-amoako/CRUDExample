@@ -7,6 +7,7 @@ using Services;
 using Serilog;
 using CRUDExample.Filters.ActionFilters;
 using CRUDExample;
+using CRUDExample.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 /*
@@ -38,6 +39,11 @@ app.UseSerilogRequestLogging();//add serilogrequest loggin to the middleware cha
 if (builder.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandlingMiddleware();
 }
 
 app.UseHttpLogging();

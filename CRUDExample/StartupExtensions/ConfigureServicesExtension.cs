@@ -31,7 +31,13 @@ namespace CRUDExample
 
             //Add PersonsService and CountriesService to the IoC
             services.AddScoped<ICountryService, CountryService>();
-            services.AddScoped<IPersonsService, PersonsService>();
+            services.AddScoped<IPersonsGetService, PersonsGetterServiceWithFewExcelFields>();
+            services.AddScoped<PersonsGetService, PersonsGetService>();
+
+            services.AddScoped<IPersonsAdderService, PersonsAddService>();
+            services.AddScoped<IPersonsSortService, PersonsSortService>();
+            services.AddScoped<IPersonsUpdateService, PersonsUpdateService>();
+            services.AddScoped<IPersonsDeleteService, PersonsDeleteService>();
             services.AddScoped<IPersonsRepository, PersonsRepository>();
             services.AddScoped<ICountriesRepository, CountriesRepository>();
             //Add PersonsDbContext to the IoC
